@@ -17,8 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from ninja import NinjaAPI, Schema
-
-from ninja import NinjaAPI
+from core.models import Deck
+from core.models import Card
+from django.utils import timezone
 
 api = NinjaAPI()
 
@@ -36,6 +37,27 @@ class UserSchema(Schema):
 
 class Error(Schema):
     message: str
+
+
+class DoesNotExist:
+    pass
+
+
+@api.post("/deck")
+def create_deck(request, eyed: int):
+    deck = Deck.objects.get(id=eyed)
+    card_cat = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
+
+    card_val = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']
+    for i in card_val:
+        for j in card_cat:
+            deck.card_set.create(suit=str(i), value=str(i) + " of " + str(j))
+    print(deck.card_set.all())
+    return {
+            "created date": deck.creation_date,
+            "id": deck.pk,
+            "set": deck.card_set.count()
+        }
 
 
 @api.get("/me", response={200: UserSchema, 403: Error})
